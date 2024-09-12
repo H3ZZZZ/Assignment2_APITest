@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
 import org.example.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,9 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
+        if (!taskRepository.existsById(id)) {
+            throw new TaskNotFoundException("Task not found with id " + id);
+        }
         taskRepository.deleteById(id);
     }
 

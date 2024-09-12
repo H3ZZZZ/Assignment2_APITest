@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
 import org.example.model.Task.TaskStatus;
 import org.example.repository.TaskRepository;
@@ -47,12 +48,37 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testDeleteTask() {
-        // Act: Delete a task by ID
-        taskService.deleteTask(1L);
+    public void testDeleteTask_Success() {
+        // Arrange: Prepare the mock repository to simulate the presence of the task
+        Long taskId = 1L;
+        when(taskRepository.existsById(taskId)).thenReturn(true);
 
-        // Assert: Verify that deleteById was called once with the correct ID
-        verify(taskRepository, times(1)).deleteById(1L);
+        // Act: Delete the task by ID
+        taskService.deleteTask(taskId);
+
+        // Assert: Verify that existsById and deleteById were called once with the correct ID
+        verify(taskRepository, times(1)).existsById(taskId);
+        verify(taskRepository, times(1)).deleteById(taskId);
+    }
+
+    @Test
+    public void testDeleteTask_TaskNotFound() {
+        // Arrange: Prepare the mock repository to simulate the absence of the task
+        Long taskId = 1L;
+        when(taskRepository.existsById(taskId)).thenReturn(false);
+
+        // Assert: Verify that the TaskNotFoundException is thrown
+        TaskNotFoundException thrown = assertThrows(TaskNotFoundException.class, () -> {
+            // Act: Attempt to delete the task by ID
+            taskService.deleteTask(taskId);
+        });
+
+        // Assert: Verify the exception message
+        assertEquals("Task not found with id " + taskId, thrown.getMessage());
+
+        // And verify that deleteById was never called
+        verify(taskRepository, times(1)).existsById(taskId);
+        verify(taskRepository, never()).deleteById(taskId);
     }
 
     @Test
@@ -84,6 +110,24 @@ public class TaskServiceTest {
     }
 
     @Test
+    public void testUpdateTask_ExistingTaskId_UpdatesTask() {
+        // Arrange: Create a task, set it to PENDING, and set up the mock to return it
+        Task existingTask = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
+        existingTask.setStatus(Task.TaskStatus.PENDING);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(existingTask));
+        when(taskRepository.save(any(Task.class))).thenReturn(existingTask);
+
+        // Act: Update the task using the service
+        Task updatedTask = taskService.updateTask(1L, new Task(1L, "New Title", "New Description", LocalDate.now(), "New Category"));
+
+        // Assert: Verify the task's title and description were updated and that findById and save were called once
+        assertEquals("New Title", updatedTask.getTitle());
+        assertEquals("New Description", updatedTask.getDescription());
+        verify(taskRepository, times(1)).findById(1L);
+        verify(taskRepository, times(1)).save(existingTask);
+    }
+
+    @Test
     public void testMarkAsCompleted_ExistingTaskId_MarksTaskAsCompleted() {
         // Arrange: Create a task, set it to PENDING, and set up the mock to return it
         Task existingTask = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
@@ -98,5 +142,18 @@ public class TaskServiceTest {
         assertEquals(Task.TaskStatus.COMPLETED, result.getStatus());
         verify(taskRepository, times(1)).findById(1L);
         verify(taskRepository, times(1)).save(existingTask);
+    }
+    @Test
+    public void testMarkedAsCompleted_NoExistingTaskId() {
+        // Arrange: Set up the mock to return empty when a task ID is not found
+        when(taskRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // Act & Assert: Expect a RuntimeException when marking a non-existent task as completed
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            taskService.markAsCompleted(1L);
+        });
+
+        // Verify the exception message
+        assertEquals("Task not found", exception.getMessage());
     }
 }

@@ -16,8 +16,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,5 +66,50 @@ public class TaskControllerIntegrationTest {
             .andExpect(status().isOk())  // Expect HTTP 200 status
             .andExpect(jsonPath("$.title", is("Title")))  // Check the task's title
             .andExpect(jsonPath("$.description", is("Description")));  // Check the task's description
+    }
+    @Test
+    public void testUpdateTask_ValidTask_ReturnsUpdatedTask() throws Exception {
+        // Arrange: Create and save a task in the repository
+        Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
+        taskRepository.save(task);
+
+        // Update the task's title and description
+        task.setTitle("Updated Title");
+        task.setDescription("Updated Description");
+
+        // Act & Assert: Perform PUT request and verify the response
+        mockMvc.perform(put("/tasks/{id}", task.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(task)))
+            .andExpect(status().isOk())  // Expect HTTP 200 status
+            .andExpect(jsonPath("$.title", is("Updated Title")))  // Check the updated title
+            .andExpect(jsonPath("$.description", is("Updated Description")));  // Check the updated description
+    }
+    @Test
+    public void testDeleteTask_ValidTask_ReturnsNoContent() throws Exception {
+        // Arrange: Create and save a task in the repository
+        Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
+        taskRepository.save(task);
+
+        // Act & Assert: Perform DELETE request and verify the response
+        mockMvc.perform(delete("/tasks/{id}", task.getId()))
+            .andExpect(status().isNoContent());  // Expect HTTP 204 status
+
+        // Test catching exception
+        mockMvc.perform(delete("/tasks/{id}", task.getId()))
+            .andExpect(status().isNotFound());  // Expect HTTP 404 status
+
+    }
+
+    @Test
+    public void testMarkAsCompleted_ValidTask_ReturnsCompletedTask() throws Exception {
+        // Arrange: Create and save a task in the repository
+        Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
+        taskRepository.save(task);
+
+        // Act & Assert: Perform PUT request and verify the response
+        mockMvc.perform(put("/tasks/{id}/complete", task.getId()))
+            .andExpect(status().isOk())  // Expect HTTP 200 status
+            .andExpect(jsonPath("$.status", is("COMPLETED")));  // Check the task's status
     }
 }
