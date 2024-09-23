@@ -17,8 +17,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -93,13 +92,17 @@ public class TaskControllerIntegrationTest {
 
         // Act & Assert: Perform DELETE request and verify the response
         mockMvc.perform(delete("/tasks/{id}", task.getId()))
-            .andExpect(status().isNoContent());  // Expect HTTP 204 status
-
-        // Test catching exception
-        mockMvc.perform(delete("/tasks/{id}", task.getId()))
-            .andExpect(status().isNotFound());  // Expect HTTP 404 status
-
+                .andExpect(status().isNoContent())  // Expect HTTP 204 status
+                .andExpect(content().string("Task deleted successfully."));  // Check the message
     }
+    @Test
+    public void testDeleteTask_TaskNotFound_ReturnsNotFound() throws Exception {
+        // Act & Assert: Perform DELETE request for a non-existing task
+        mockMvc.perform(delete("/tasks/{id}", 999L))  // Assuming 999L is a non-existent task ID
+                .andExpect(status().isNotFound())  // Expect HTTP 404 status
+                .andExpect(content().string("Task not found."));  // Check the error message
+    }
+
 
     @Test
     public void testMarkAsCompleted_ValidTask_ReturnsCompletedTask() throws Exception {

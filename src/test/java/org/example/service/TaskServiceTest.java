@@ -119,13 +119,20 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testDeleteTask() {
-        // Act: Delete a task by ID
+    public void testDeleteTask_Success() {
+        // Arrange: Create a mock task and set up the repository to return it when findById is called
+        Task task = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));  // Mock task found
+
+        // Act: Call deleteTask with a valid ID
         taskService.deleteTask(1L);
 
-        // Assert: Verify that deleteById was called once with the correct ID
-        verify(taskRepository, times(1)).deleteById(1L);
+        // Assert: Verify that findById was called once and delete was called once with the correct task
+        verify(taskRepository, times(1)).findById(1L);
+        verify(taskRepository, times(1)).delete(task);  // Change this to delete(task) instead of deleteById
     }
+
+
 
     @Test
     public void testGetTasks() {
