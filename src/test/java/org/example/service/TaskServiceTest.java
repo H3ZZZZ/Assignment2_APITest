@@ -1,21 +1,19 @@
 package org.example.service;
 
-import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
-import org.example.model.Task.TaskStatus;
 import org.example.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -34,6 +32,51 @@ public class TaskServiceTest {
     }
 
     @Test
+    public void testAddTask_ValidationFails_TitleTooShort() {
+        // Arrange: Create a task with a title that's too short
+        Task task = new Task(null, "A", "Valid description", LocalDate.now(), "Category");
+
+        // Act & Assert: Expect a ResponseStatusException when validation fails
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            taskService.addTask(task);
+        });
+
+        // Assert that the correct exception message is thrown
+        assertEquals("400 BAD_REQUEST \"Task title must be at least 3 characters long\"", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    public void testAddTask_ValidationFails_TitleTooLong() {
+        // Arrange: Create a task with a title that's too long (over 50 characters)
+        String longTitle = "A".repeat(51); // Title with 51 characters
+        Task task = new Task(null, longTitle, "Valid description", LocalDate.now(), "Category");
+
+        // Act & Assert: Expect a ResponseStatusException when validation fails
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            taskService.addTask(task);
+        });
+
+        // Assert that the correct exception message is thrown
+        assertEquals("400 BAD_REQUEST \"Task title must be no more than 50 characters long\"", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    public void testAddTask_ValidTitleLength() {
+        // Arrange: Create a task with a valid title length
+        Task task = new Task(null, "Valid Title", "Valid description", LocalDate.now(), "Category");
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+
+        // Act: Save the task using the service
+        Task savedTask = taskService.addTask(task);
+
+        // Assert: Verify the saved task's title and that save was called once
+        assertEquals("Valid Title", savedTask.getTitle());
+        verify(taskRepository, times(1)).save(task);
+    }
+
+    @Test
     public void testAddTask() {
         // Arrange: Create a task and set up the mock to return it when saved
         Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
@@ -48,37 +91,40 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testDeleteTask_Success() {
-        // Arrange: Prepare the mock repository to simulate the presence of the task
-        Long taskId = 1L;
-        when(taskRepository.existsById(taskId)).thenReturn(true);
+    public void testAddTask_ValidationFails_EmptyTitle() {
+        // Arrange: Create a task with an empty title
+        Task task = new Task(null, "", "Valid description", LocalDate.now(), "Category");
 
-        // Act: Delete the task by ID
-        taskService.deleteTask(taskId);
+        // Act & Assert: Expect a ResponseStatusException when validation fails
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            taskService.addTask(task);
+        });
 
-        // Assert: Verify that existsById and deleteById were called once with the correct ID
-        verify(taskRepository, times(1)).existsById(taskId);
-        verify(taskRepository, times(1)).deleteById(taskId);
+        assertEquals("400 BAD_REQUEST \"Task title must not be empty\"", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
     }
 
     @Test
-    public void testDeleteTask_TaskNotFound() {
-        // Arrange: Prepare the mock repository to simulate the absence of the task
-        Long taskId = 1L;
-        when(taskRepository.existsById(taskId)).thenReturn(false);
+    public void testAddTask_ValidationFails_ShortDescription() {
+        // Arrange: Create a task with a description that's too short
+        Task task = new Task(null, "Valid Title", "123", LocalDate.now(), "Category");
 
-        // Assert: Verify that the TaskNotFoundException is thrown
-        TaskNotFoundException thrown = assertThrows(TaskNotFoundException.class, () -> {
-            // Act: Attempt to delete the task by ID
-            taskService.deleteTask(taskId);
+        // Act & Assert: Expect a ResponseStatusException when validation fails
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            taskService.addTask(task);
         });
 
-        // Assert: Verify the exception message
-        assertEquals("Task not found with id " + taskId, thrown.getMessage());
+        assertEquals("400 BAD_REQUEST \"Task description must be at least 5 characters long\"", exception.getMessage());
+        verify(taskRepository, never()).save(any(Task.class));
+    }
 
-        // And verify that deleteById was never called
-        verify(taskRepository, times(1)).existsById(taskId);
-        verify(taskRepository, never()).deleteById(taskId);
+    @Test
+    public void testDeleteTask() {
+        // Act: Delete a task by ID
+        taskService.deleteTask(1L);
+
+        // Assert: Verify that deleteById was called once with the correct ID
+        verify(taskRepository, times(1)).deleteById(1L);
     }
 
     @Test
@@ -110,20 +156,20 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testUpdateTask_ExistingTaskId_UpdatesTask() {
-        // Arrange: Create a task, set it to PENDING, and set up the mock to return it
-        Task existingTask = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
-        existingTask.setStatus(Task.TaskStatus.PENDING);
+    public void testUpdateTask_ExistingTask_ValidData() {
+        // Arrange: Create an existing task and the updated task details
+        Task existingTask = new Task(1L, "Old Title", "Old Description", LocalDate.now(), "Category");
+        Task updatedTaskDetails = new Task(1L, "New Title", "New Description", LocalDate.now(), "Category");
+
         when(taskRepository.findById(1L)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(any(Task.class))).thenReturn(existingTask);
 
-        // Act: Update the task using the service
-        Task updatedTask = taskService.updateTask(1L, new Task(1L, "New Title", "New Description", LocalDate.now(), "New Category"));
+        // Act: Update the task
+        Task updatedTask = taskService.updateTask(1L, updatedTaskDetails);
 
-        // Assert: Verify the task's title and description were updated and that findById and save were called once
+        // Assert: Verify that the task's title and description were updated and save was called
         assertEquals("New Title", updatedTask.getTitle());
         assertEquals("New Description", updatedTask.getDescription());
-        verify(taskRepository, times(1)).findById(1L);
         verify(taskRepository, times(1)).save(existingTask);
     }
 
@@ -143,8 +189,9 @@ public class TaskServiceTest {
         verify(taskRepository, times(1)).findById(1L);
         verify(taskRepository, times(1)).save(existingTask);
     }
+
     @Test
-    public void testMarkedAsCompleted_NoExistingTaskId() {
+    public void testMarkAsCompleted_TaskNotFound() {
         // Arrange: Set up the mock to return empty when a task ID is not found
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 

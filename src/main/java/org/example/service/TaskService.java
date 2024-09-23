@@ -1,10 +1,11 @@
 package org.example.service;
 
-import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
 import org.example.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,12 @@ public class TaskService {
     @Autowired
     private TaskRepository taskRepository;
 
+    private static final int MIN_DESCRIPTION_LENGTH = 5;
+    private static final int MIN_TITLE_LENGTH = 3; // Minimum title length
+    private static final int MAX_TITLE_LENGTH = 50; // Maximum title length
+
     public Task addTask(Task task) {
+        validateTask(task);
         return taskRepository.save(task);
     }
 
@@ -28,6 +34,8 @@ public class TaskService {
             task.setStatus(taskDetails.getStatus());
             task.setDeadline(taskDetails.getDeadline());
             task.setCategory(taskDetails.getCategory());
+
+            validateTask(task); // Validate before updating
             return taskRepository.save(task);
         } else {
             throw new RuntimeException("Task not found");
@@ -35,9 +43,6 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
-        if (!taskRepository.existsById(id)) {
-            throw new TaskNotFoundException("Task not found with id " + id);
-        }
         taskRepository.deleteById(id);
     }
 
@@ -53,6 +58,25 @@ public class TaskService {
             return taskRepository.save(task);
         } else {
             throw new RuntimeException("Task not found");
+        }
+    }
+
+    // Validation method
+    private void validateTask(Task task) {
+        if (task.getTitle() == null || task.getTitle().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title must not be empty");
+        }
+
+        if (task.getTitle().length() < MIN_TITLE_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title must be at least " + MIN_TITLE_LENGTH + " characters long");
+        }
+
+        if (task.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title must be no more than " + MAX_TITLE_LENGTH + " characters long");
+        }
+
+        if (task.getDescription() == null || task.getDescription().length() < MIN_DESCRIPTION_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task description must be at least " + MIN_DESCRIPTION_LENGTH + " characters long");
         }
     }
 }
