@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TaskNotFoundExceptionTest {
     @Test
-    public void testTaskNotFoundException() {
+    void testTaskNotFoundException() {
         String errorMessage = "Task not found";
         TaskNotFoundException exception = new TaskNotFoundException(errorMessage);
 

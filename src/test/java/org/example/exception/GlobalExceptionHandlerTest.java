@@ -13,12 +13,12 @@ public class GlobalExceptionHandlerTest {
     private GlobalExceptionHandler globalExceptionHandler;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         globalExceptionHandler = new GlobalExceptionHandler();
     }
 
     @Test
-    public void handleTaskNotFoundException() {
+    void handleTaskNotFoundException() {
         TaskNotFoundException exception = new TaskNotFoundException("Task not found");
         WebRequest webRequest = mock(WebRequest.class);
 
