@@ -3,7 +3,6 @@ package org.example.service;
 import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
 import org.example.repository.TaskRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,12 +13,15 @@ import java.util.Optional;
 @Service
 public class TaskService {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    private final TaskRepository taskRepository;
 
     private static final int MIN_DESCRIPTION_LENGTH = 5;
     private static final int MIN_TITLE_LENGTH = 3; // Minimum title length
     private static final int MAX_TITLE_LENGTH = 50; // Maximum title length
+
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+    }
 
     public Task addTask(Task task) {
         validateTask(task);
