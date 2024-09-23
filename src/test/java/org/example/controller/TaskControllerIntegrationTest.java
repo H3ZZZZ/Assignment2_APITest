@@ -40,6 +40,9 @@ public class TaskControllerIntegrationTest {
 
     @Test
     public void testGetTasksReturnsListOfTasks() throws Exception {
+        // Clear the repository to ensure only our test data is present
+        taskRepository.deleteAll();
+
         // Arrange: Create and save tasks in the repository
         Task task1 = new Task(null, "Title 1", "Description 1", LocalDate.now(), "Category 1");
         Task task2 = new Task(null, "Title 2", "Description 2", LocalDate.now(), "Category 2");
@@ -96,7 +99,7 @@ public class TaskControllerIntegrationTest {
                 .andExpect(content().string("Task deleted successfully."));  // Check the message
     }
     @Test
-    public void testDeleteTask_TaskNotFound_ReturnsNotFound() throws Exception {
+    public void testDeleteTaskTaskNotFoundReturnsNotFound() throws Exception {
         // Act & Assert: Perform DELETE request for a non-existing task
         mockMvc.perform(delete("/tasks/{id}", 999L))  // Assuming 999L is a non-existent task ID
                 .andExpect(status().isNotFound())  // Expect HTTP 404 status
