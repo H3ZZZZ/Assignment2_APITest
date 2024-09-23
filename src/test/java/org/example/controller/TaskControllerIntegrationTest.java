@@ -39,7 +39,10 @@ public class TaskControllerIntegrationTest {
     }
 
     @Test
-    public void testGetTasks_ReturnsListOfTasks() throws Exception {
+    public void testGetTasksReturnsListOfTasks() throws Exception {
+        // Clear the repository to ensure only our test data is present
+        taskRepository.deleteAll();
+
         // Arrange: Create and save tasks in the repository
         Task task1 = new Task(null, "Title 1", "Description 1", LocalDate.now(), "Category 1");
         Task task2 = new Task(null, "Title 2", "Description 2", LocalDate.now(), "Category 2");
@@ -54,7 +57,7 @@ public class TaskControllerIntegrationTest {
     }
 
     @Test
-    public void testAddTask_ValidTask_ReturnsCreatedTask() throws Exception {
+    public void testAddTaskValidTaskReturnsCreatedTask() throws Exception {
         // Arrange: Create a task
         Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
 
@@ -67,7 +70,7 @@ public class TaskControllerIntegrationTest {
             .andExpect(jsonPath("$.description", is("Description")));  // Check the task's description
     }
     @Test
-    public void testUpdateTask_ValidTask_ReturnsUpdatedTask() throws Exception {
+    public void testUpdateTaskValidTaskReturnsUpdatedTask() throws Exception {
         // Arrange: Create and save a task in the repository
         Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
         taskRepository.save(task);
@@ -85,7 +88,7 @@ public class TaskControllerIntegrationTest {
             .andExpect(jsonPath("$.description", is("Updated Description")));  // Check the updated description
     }
     @Test
-    public void testDeleteTask_ValidTask_ReturnsNoContent() throws Exception {
+    public void testDeleteTaskValidTaskReturnsNoContent() throws Exception {
         // Arrange: Create and save a task in the repository
         Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
         taskRepository.save(task);
@@ -96,7 +99,7 @@ public class TaskControllerIntegrationTest {
                 .andExpect(content().string("Task deleted successfully."));  // Check the message
     }
     @Test
-    public void testDeleteTask_TaskNotFound_ReturnsNotFound() throws Exception {
+    public void testDeleteTaskTaskNotFoundReturnsNotFound() throws Exception {
         // Act & Assert: Perform DELETE request for a non-existing task
         mockMvc.perform(delete("/tasks/{id}", 999L))  // Assuming 999L is a non-existent task ID
                 .andExpect(status().isNotFound())  // Expect HTTP 404 status
@@ -105,7 +108,7 @@ public class TaskControllerIntegrationTest {
 
 
     @Test
-    public void testMarkAsCompleted_ValidTask_ReturnsCompletedTask() throws Exception {
+    public void testMarkAsCompletedValidTaskReturnsCompletedTask() throws Exception {
         // Arrange: Create and save a task in the repository
         Task task = new Task(null, "Title", "Description", LocalDate.now(), "Category");
         taskRepository.save(task);

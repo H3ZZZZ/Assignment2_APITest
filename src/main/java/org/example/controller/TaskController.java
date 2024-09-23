@@ -4,7 +4,6 @@ package org.example.controller;
 import org.example.exception.TaskNotFoundException;
 import org.example.model.Task;
 import org.example.service.TaskService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +23,11 @@ public class TaskController {
 //    Password: password
 //    Click on "Connect".
     
-    @Autowired
-    private TaskService taskService;
+    private final TaskService taskService;
+
+    public TaskController(TaskService taskService) {
+        this.taskService = taskService;
+    }
 
     @PostMapping
     public Task addTask(@RequestBody Task task) {
