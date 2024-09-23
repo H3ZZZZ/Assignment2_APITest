@@ -32,7 +32,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testAddTask_ValidationFails_TitleTooShort() {
+    public void testAddTaskValidationFailsTitleTooShort() {
         // Arrange: Create a task with a title that's too short
         Task task = new Task(null, "A", "Valid description", LocalDate.now(), "Category");
 
@@ -47,7 +47,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testAddTask_ValidationFails_TitleTooLong() {
+    public void testAddTaskValidationFailsTitleTooLong() {
         // Arrange: Create a task with a title that's too long (over 50 characters)
         String longTitle = "A".repeat(51); // Title with 51 characters
         Task task = new Task(null, longTitle, "Valid description", LocalDate.now(), "Category");
@@ -63,7 +63,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testAddTask_ValidTitleLength() {
+    public void testAddTaskValidTitleLength() {
         // Arrange: Create a task with a valid title length
         Task task = new Task(null, "Valid Title", "Valid description", LocalDate.now(), "Category");
         when(taskRepository.save(any(Task.class))).thenReturn(task);
@@ -91,7 +91,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testAddTask_ValidationFails_EmptyTitle() {
+    public void testAddTaskValidationFailsEmptyTitle() {
         // Arrange: Create a task with an empty title
         Task task = new Task(null, "", "Valid description", LocalDate.now(), "Category");
 
@@ -105,7 +105,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testAddTask_ValidationFails_ShortDescription() {
+    public void testAddTaskValidationFailsShortDescription() {
         // Arrange: Create a task with a description that's too short
         Task task = new Task(null, "Valid Title", "123", LocalDate.now(), "Category");
 
@@ -119,7 +119,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testDeleteTask_Success() {
+    public void testDeleteTaskSuccess() {
         // Arrange: Create a mock task and set up the repository to return it when findById is called
         Task task = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));  // Mock task found
@@ -149,7 +149,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testUpdateTask_TaskNotFound() {
+    public void testUpdateTaskTaskNotFound() {
         // Arrange: Set up the mock to return empty when a task ID is not found
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -163,7 +163,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testUpdateTask_ExistingTask_ValidData() {
+    public void testUpdateTaskExistingTaskValidData() {
         // Arrange: Create an existing task and the updated task details
         Task existingTask = new Task(1L, "Old Title", "Old Description", LocalDate.now(), "Category");
         Task updatedTaskDetails = new Task(1L, "New Title", "New Description", LocalDate.now(), "Category");
@@ -181,7 +181,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testMarkAsCompleted_ExistingTaskId_MarksTaskAsCompleted() {
+    public void testMarkAsCompletedExistingTaskIdMarksTaskAsCompleted() {
         // Arrange: Create a task, set it to PENDING, and set up the mock to return it
         Task existingTask = new Task(1L, "Title", "Description", LocalDate.now(), "Category");
         existingTask.setStatus(Task.TaskStatus.PENDING);
@@ -198,7 +198,7 @@ public class TaskServiceTest {
     }
 
     @Test
-    public void testMarkAsCompleted_TaskNotFound() {
+    public void testMarkAsCompletedTaskNotFound() {
         // Arrange: Set up the mock to return empty when a task ID is not found
         when(taskRepository.findById(1L)).thenReturn(Optional.empty());
 
